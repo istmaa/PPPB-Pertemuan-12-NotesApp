@@ -28,6 +28,8 @@ fun NotesScreen(
 ) {
     val notes by vm.notes.collectAsState()
     var input by rememberSaveable { mutableStateOf("") }
+    var editingId by rememberSaveable { mutableStateOf<Long?>(null) }
+    var editingText by rememberSaveable { mutableStateOf("") }
 
     Column(
         modifier = modifier
@@ -84,10 +86,26 @@ fun NotesScreen(
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(notes, key = { it.id }) { note ->
-                    NoteItem(
-                        note = note,
-                        onDelete = { vm.deleteNote(note) }
-                    )
+                    if (editingId == note.id) {
+                        NoteItemEditing(
+                            text = editingText,
+                            onTextChange = { editingText = it },
+                            onSave = {
+                                vm.updateNote(note, editingText)
+                                editingId = null
+                            },
+                            onCancel = { editingId = null }
+                        )
+                    } else {
+                        NoteItem(
+                            note = note,
+                            onEdit = {
+                                editingId = note.id
+                                editingText = note.title
+                            },
+                            onDelete = { vm.deleteNote(note) }
+                        )
+                    }
                     HorizontalDivider()
                 }
             }
@@ -98,21 +116,64 @@ fun NotesScreen(
 @Composable
 fun NoteItem(
     note: Note,
+    onEdit: () -> Unit = {},
     onDelete: () -> Unit = {}
 ) {
     ListItem(
         headlineContent = { Text(note.title) },
         supportingContent = { Text("ID: ${note.id}") },
         trailingContent = {
-            IconButton(onClick = onDelete) {
-                Icon(
-                    painter = painterResource(R.drawable.ic_delete),
-                    contentDescription = "Hapus",
-                    tint = Color(0xFFF44336)
-                )
+            Row {
+                IconButton(onClick = onEdit) {
+                    Icon(
+                        painterResource(R.drawable.ic_edit),
+                        "Edit",
+                        tint = Color(0xFF2196F3)
+                    )
+                }
+                IconButton(onClick = onDelete) {
+                    Icon(
+                        painterResource(R.drawable.ic_delete),
+                        "Hapus",
+                        tint = Color(0xFFF44336)
+                    )
+                }
             }
         }
     )
+}
+
+@Composable
+fun NoteItemEditing(
+    text: String,
+    onTextChange: (String) -> Unit,
+    onSave: () -> Unit,
+    onCancel: () -> Unit
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        OutlinedTextField(
+            value = text,
+            onValueChange = onTextChange,
+            label = { Text("Ubah catatan") },
+            singleLine = true,
+            modifier = Modifier.weight(1f)
+        )
+        IconButton(onClick = onSave) {
+            Icon(
+                painterResource(R.drawable.ic_check),
+                "Simpan",
+                tint = Color(0xFF4CAF50)
+            )
+        }
+        IconButton(onClick = onCancel) {
+            Icon(painterResource(R.drawable.ic_close), "Batal")
+        }
+    }
 }
 
 @Preview(showBackground = true)
