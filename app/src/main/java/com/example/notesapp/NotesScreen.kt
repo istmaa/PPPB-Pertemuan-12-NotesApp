@@ -84,7 +84,10 @@ fun NotesScreen(
         } else {
             LazyColumn(modifier = Modifier.fillMaxSize()) {
                 items(notes, key = { it.id }) { note ->
-                    NoteItem(note = note)
+                    NoteItem(
+                        note = note,
+                        onDelete = { vm.deleteNote(note) }
+                    )
                     HorizontalDivider()
                 }
             }
@@ -93,10 +96,22 @@ fun NotesScreen(
 }
 
 @Composable
-fun NoteItem(note: Note) {
+fun NoteItem(
+    note: Note,
+    onDelete: () -> Unit = {}
+) {
     ListItem(
         headlineContent = { Text(note.title) },
-        supportingContent = { Text("ID: ${note.id}") }
+        supportingContent = { Text("ID: ${note.id}") },
+        trailingContent = {
+            IconButton(onClick = onDelete) {
+                Icon(
+                    painter = painterResource(R.drawable.ic_delete),
+                    contentDescription = "Hapus",
+                    tint = Color(0xFFF44336)
+                )
+            }
+        }
     )
 }
 
